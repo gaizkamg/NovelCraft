@@ -3,11 +3,11 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  CheckSquare,
   FileText,
   MapPin,
   NotebookPen,
   Sparkles,
-  Target,
   UserRound,
   X
 } from 'lucide-react'
@@ -22,6 +22,7 @@ import { useAppStore } from '../store/useAppStore'
 import { AiAssistant } from './AiAssistant'
 import { ColorPicker, Field, MultiSelect, TagInput } from './ui/Form'
 import { Switch } from './ui/Modal'
+import { WritingGuideInspector } from './write/WritingGuideInspector'
 
 function InspectorSection({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
@@ -39,6 +40,7 @@ function SceneInspector({ node }: { node: DocumentNode }) {
   const project = useAppStore((state) => state.project)
   const updateNode = useAppStore((state) => state.updateNode)
   const selectDocument = useAppStore((state) => state.selectDocument)
+  const setInspectorTab = useAppStore((state) => state.setInspectorTab)
   if (!project) return null
   const chapter = project.nodes[node.parentId]
   const characterOptions = project.characters.map((character) => ({
@@ -68,6 +70,13 @@ function SceneInspector({ node }: { node: DocumentNode }) {
 
   return (
     <div className="inspector-scroll">
+      {[node.goal, node.conflict, node.outcome].some((v) => !v) && (
+        <div className="inspector-guide-button">
+          <button className="btn sm" onClick={() => setInspectorTab('ai')}>
+            <Sparkles size={13} /> Inspirar con IA
+          </button>
+        </div>
+      )}
       <InspectorSection title="Metadatos de escena" icon={<FileText size={13} />}>
         <Field label="Estado">
           <div className="status-pills">
@@ -146,18 +155,6 @@ function SceneInspector({ node }: { node: DocumentNode }) {
             placeholder="Vincular ítems"
             compact
           />
-        </Field>
-      </InspectorSection>
-
-      <InspectorSection title="Tensión dramática" icon={<Target size={13} />}>
-        <Field label="Objetivo de la escena">
-          <textarea className="textarea sm" value={node.goal} onChange={(event) => updateNode(node.id, { goal: event.target.value })} rows={2} placeholder="Qué busca el personaje" />
-        </Field>
-        <Field label="Conflicto">
-          <textarea className="textarea sm" value={node.conflict} onChange={(event) => updateNode(node.id, { conflict: event.target.value })} rows={2} placeholder="Qué se opone" />
-        </Field>
-        <Field label="Resultado">
-          <textarea className="textarea sm" value={node.outcome} onChange={(event) => updateNode(node.id, { outcome: event.target.value })} rows={2} placeholder="Qué cambia al final" />
         </Field>
       </InspectorSection>
 
@@ -320,6 +317,10 @@ export function Inspector() {
               <Sparkles size={12} />
               Asistente
             </button>
+            <button className={activeTab === 'guide' ? 'active' : ''} onClick={() => setInspectorTab('guide')}>
+              <CheckSquare size={12} />
+              Guía de Escritura
+            </button>
           </div>
         ) : (
           <div className="inspector-standalone-title">
@@ -334,7 +335,9 @@ export function Inspector() {
         </button>
       </div>
 
-      {activeTab === 'ai' ? (
+      {activeTab === 'guide' ? (
+        <WritingGuideInspector />
+      ) : activeTab === 'ai' ? (
         <AiAssistant />
       ) : !node ? (
         <div className="inspector-scroll">
